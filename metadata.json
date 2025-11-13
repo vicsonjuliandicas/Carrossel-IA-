@@ -1,0 +1,5 @@
+{
+  "name": "Criador de Carrossel de IA para Redes Sociais",
+  "description": "Uma aplicação que usa IA para gerar carrosséis completos para redes sociais, incluindo imagens e texto, com base em um tema, tom de voz e paleta de cores fornecidos pelo usuário.",
+  "requestFramePermissions": []
+}
