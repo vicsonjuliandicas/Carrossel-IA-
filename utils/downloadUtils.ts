@@ -1,3 +1,4 @@
+
 import JSZip from 'jszip';
 import type { Slide } from '../types';
 
@@ -59,13 +60,25 @@ export const createSlideImage = async (slide: Slide): Promise<Blob> => {
     throw new Error('Não foi possível obter o contexto do canvas.');
   }
 
-  const selectedFont = slide.fontFamily || 'Poppins';
-  const titleFontFamily = selectedFont === 'Anton' ? 'Anton' : selectedFont;
-  const bodyFontFamily = 'Poppins'; // Keep Poppins for body for readability
+  // Get font properties from slide object with fallbacks
+  const titleFamily = slide.titleFontFamily || 'Anton';
+  const bodyFamily = slide.bodyFontFamily || 'Poppins';
+  const titleWeight = slide.isTitleBold ? 'bold' : 'normal';
+  const titleStyle = slide.isTitleItalic ? 'italic' : 'normal';
+  const bodyWeight = slide.isBodyBold ? 'bold' : 'normal';
+  const bodyStyle = slide.isBodyItalic ? 'italic' : 'normal';
+
+  // Convert rem-like font size to pixels for canvas
+  const baseFontSize = CANVAS_SIZE * 0.025;
+  const titleFontSizePx = baseFontSize * (slide.titleFontSize || 3.5);
+  const bodyFontSizePx = baseFontSize * (slide.bodyFontSize || 1.5);
+
+  const titleFontLoadString = `${titleStyle} ${titleWeight} ${titleFontSizePx}px ${titleFamily}`;
+  const bodyFontLoadString = `${bodyStyle} ${bodyWeight} ${bodyFontSizePx}px ${bodyFamily}`;
 
   // Ensure fonts are loaded before using them on canvas
-  await document.fonts.load(`bold ${CANVAS_SIZE * 0.09}px ${titleFontFamily}`);
-  await document.fonts.load(`${CANVAS_SIZE * 0.04}px ${bodyFontFamily}`);
+  await document.fonts.load(titleFontLoadString);
+  await document.fonts.load(bodyFontLoadString);
 
   // Carregar imagem de fundo
   const backgroundImage = new Image();
@@ -101,24 +114,12 @@ export const createSlideImage = async (slide: Slide): Promise<Blob> => {
     textX = CANVAS_SIZE / 2;
   }
 
-
-  // --- Text Height Calculation for Vertical Centering ---
-  const titleLineHeight = CANVAS_SIZE * 0.1;
-  const bodyLineHeight = CANVAS_SIZE * 0.055;
+  // --- Text Positioning ---
+  let currentY = padding; // Start text from the top padding
+  const titleLineHeight = titleFontSizePx * 1.1;
+  const bodyLineHeight = bodyFontSizePx * 1.3;
   const spacing = CANVAS_SIZE * 0.05; // Space between title and body
 
-  // Measure Title
-  ctx.font = `bold ${CANVAS_SIZE * 0.09}px ${titleFontFamily}`;
-  const titleLines = getWrappedLines(ctx, slide.title, maxWidth, 2); // Allow title to wrap to 2 lines
-  const titleHeight = titleLines.length * titleLineHeight;
-
-  // Measure Body
-  ctx.font = `${CANVAS_SIZE * 0.04}px ${bodyFontFamily}`;
-  const bodyLines = getWrappedLines(ctx, slide.body, maxWidth, 3); // Allow body to wrap to 3 lines
-  const bodyHeight = bodyLines.length * bodyLineHeight;
-
-  const totalTextHeight = titleHeight + (bodyLines.length > 0 ? spacing + bodyHeight : 0);
-  let currentY = (CANVAS_SIZE - totalTextHeight) / 2;
 
   // --- Text Drawing ---
   ctx.textBaseline = 'top'; // Align text from the top for precise positioning
@@ -128,21 +129,59 @@ export const createSlideImage = async (slide: Slide): Promise<Blob> => {
   ctx.fillStyle = '#FFFFFF'; // White text
 
   // Draw Title
-  ctx.font = `bold ${CANVAS_SIZE * 0.09}px ${titleFontFamily}`;
+  ctx.font = titleFontLoadString;
+  const titleLines = getWrappedLines(ctx, slide.title, maxWidth, 2); // Allow title to wrap to 2 lines
   for (const line of titleLines) {
       drawTextWithOutline(ctx, line, textX, currentY);
       currentY += titleLineHeight;
   }
   
-  if (bodyLines.length > 0) {
+  // Measure Body
+  ctx.font = bodyFontLoadString;
+  const bodyLines = getWrappedLines(ctx, slide.body, maxWidth, 4); // Allow body to wrap to 4 lines
+  if (bodyLines.length > 0 && bodyLines[0] !== '') {
       currentY += spacing;
   }
 
   // Draw Body
-  ctx.font = `${CANVAS_SIZE * 0.04}px ${bodyFontFamily}`;
   for (const line of bodyLines) {
       drawTextWithOutline(ctx, line, textX, currentY);
       currentY += bodyLineHeight;
+  }
+
+  // --- Author Drawing ---
+  if (slide.authorName || slide.authorHandle) {
+    const authorFontFamily = 'Poppins';
+    const authorNameFontSizePx = CANVAS_SIZE * 0.022; // 2.2% of canvas size
+    const authorHandleFontSizePx = CANVAS_SIZE * 0.02; // 2% of canvas size
+    const authorNameFontWeight = '600'; // Semibold
+    const authorHandleFontWeight = 'normal';
+    const authorFontStyle = 'normal';
+    const authorLineHeight = authorNameFontSizePx * 0.9;
+
+    await document.fonts.load(`${authorFontStyle} ${authorNameFontWeight} ${authorNameFontSizePx}px ${authorFontFamily}`);
+    await document.fonts.load(`${authorFontStyle} ${authorHandleFontWeight} ${authorHandleFontSizePx}px ${authorFontFamily}`);
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    const authorPadding = CANVAS_SIZE * 0.04; // 4% padding
+    let authorY = CANVAS_SIZE - authorPadding;
+    
+    // Set properties for author text
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 6;
+    ctx.fillStyle = '#FFFFFF';
+
+    if (slide.authorHandle) {
+      ctx.font = `${authorFontStyle} ${authorHandleFontWeight} ${authorHandleFontSizePx}px ${authorFontFamily}`;
+      drawTextWithOutline(ctx, slide.authorHandle, authorPadding, authorY);
+      authorY -= authorLineHeight;
+    }
+
+    if (slide.authorName) {
+      ctx.font = `${authorFontStyle} ${authorNameFontWeight} ${authorNameFontSizePx}px ${authorFontFamily}`;
+      drawTextWithOutline(ctx, slide.authorName, authorPadding, authorY);
+    }
   }
 
   return new Promise((resolve, reject) => {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Slide, ColorPalette, VisualStyle } from './types';
 import { Tone } from './types';
@@ -10,7 +11,9 @@ import { generateCarouselContent, regenerateSlideImage } from './services/gemini
 const App: React.FC = () => {
   const [theme, setTheme] = useState<string>(() => localStorage.getItem('carouselTheme') || '');
   const [tone, setTone] = useState<Tone>(() => (localStorage.getItem('carouselTone') as Tone) || Tone.INSPIRATIONAL);
-  
+  const [authorName, setAuthorName] = useState<string>(() => localStorage.getItem('carouselAuthorName') || '');
+  const [authorHandle, setAuthorHandle] = useState<string>(() => localStorage.getItem('carouselAuthorHandle') || '');
+
   const getInitialPalette = (): ColorPalette => {
     try {
       const saved = localStorage.getItem('carouselPalette');
@@ -62,6 +65,15 @@ const App: React.FC = () => {
     localStorage.setItem('carouselStyle', JSON.stringify(selectedStyle));
   }, [selectedStyle]);
 
+  useEffect(() => {
+    localStorage.setItem('carouselAuthorName', authorName);
+  }, [authorName]);
+
+  useEffect(() => {
+    localStorage.setItem('carouselAuthorHandle', authorHandle);
+  }, [authorHandle]);
+
+
   const handleGenerate = async () => {
     if (!theme.trim()) {
       setError('Por favor, insira um tema para o seu carrossel.');
@@ -73,12 +85,21 @@ const App: React.FC = () => {
 
     try {
       const generatedSlidesData = await generateCarouselContent(theme, tone, selectedPalette, selectedStyle);
-      const slidesWithDefaults = generatedSlidesData.map(slide => ({
+      // FIX: Explicitly type `slidesWithDefaults` as `Slide[]` to prevent TypeScript
+      // from widening the type of `textAlign` to `string`, which caused a type error.
+      const slidesWithDefaults: Slide[] = generatedSlidesData.map(slide => ({
         ...slide,
-        fontFamily: 'Poppins', // Add default font
-        titleFontSize: 1.5, // Start with the smallest font size
-        bodyFontSize: 0.8, // Start with the smallest font size
-        textAlign: 'center', // Default alignment
+        authorName: authorName.trim(),
+        authorHandle: authorHandle.trim(),
+        titleFontFamily: 'Anton',
+        bodyFontFamily: 'Poppins',
+        isTitleBold: true,
+        isTitleItalic: false,
+        isBodyBold: false,
+        isBodyItalic: false,
+        titleFontSize: 2.8,
+        bodyFontSize: 1.4,
+        textAlign: 'center',
       }));
       setSlides(slidesWithDefaults);
     } catch (err: any) {
@@ -167,6 +188,10 @@ const App: React.FC = () => {
               setSelectedPalette={setSelectedPalette}
               selectedStyle={selectedStyle}
               setSelectedStyle={setSelectedStyle}
+              authorName={authorName}
+              setAuthorName={setAuthorName}
+              authorHandle={authorHandle}
+              setAuthorHandle={setAuthorHandle}
               onGenerate={handleGenerate}
               isLoading={isLoading || isDownloading}
             />

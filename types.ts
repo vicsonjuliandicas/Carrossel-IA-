@@ -7,6 +7,11 @@ export enum Tone {
   INSPIRATIONAL = 'Inspirador',
   HUMOROUS = 'Bem-humorado',
   EDUCATIONAL = 'Educacional',
+  SARCASTIC = 'Sarcástico',
+  EMPATHETIC = 'Empático',
+  URGENT = 'Urgente',
+  POETIC = 'Poético',
+  MYSTERIOUS = 'Misterioso',
 }
 
 export interface ColorPalette {
@@ -22,17 +27,25 @@ export interface Slide {
   title: string;
   body: string;
   imageUrl: string;
-  fontFamily?: string;
+  titleFontFamily?: string;
+  bodyFontFamily?: string;
+  isTitleBold?: boolean;
+  isTitleItalic?: boolean;
+  isBodyBold?: boolean;
+  isBodyItalic?: boolean;
   titleFontSize?: number;
   bodyFontSize?: number;
   textAlign?: 'left' | 'center' | 'right';
   isImageLoading?: boolean;
+  authorName?: string;
+  authorHandle?: string;
 }
 
 export interface VisualStyle {
   name: string;
   keywords: string;
   previewImageUrl: string;
+  colorClass: string;
 }
 
 export type ViewMode = 'normal' | 'edit';

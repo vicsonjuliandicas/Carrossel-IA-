@@ -14,6 +14,10 @@ interface ControlsProps {
   setSelectedPalette: (palette: ColorPalette) => void;
   selectedStyle: VisualStyle;
   setSelectedStyle: (style: VisualStyle) => void;
+  authorName: string;
+  setAuthorName: (name: string) => void;
+  authorHandle: string;
+  setAuthorHandle: (handle: string) => void;
   onGenerate: () => void;
   isLoading: boolean;
 }
@@ -27,6 +31,10 @@ const Controls: React.FC<ControlsProps> = ({
   setSelectedPalette,
   selectedStyle,
   setSelectedStyle,
+  authorName,
+  setAuthorName,
+  authorHandle,
+  setAuthorHandle,
   onGenerate,
   isLoading,
 }) => {
@@ -104,32 +112,61 @@ const Controls: React.FC<ControlsProps> = ({
           4. Escolha um estilo visual
         </label>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-          {VISUAL_STYLES.map((style) => (
-            <button
-              key={style.name}
-              onClick={() => setSelectedStyle(style)}
-              className={`relative h-28 p-1.5 rounded-lg text-center flex items-center justify-center transition-all duration-200 border-2 group ${ 
-                selectedStyle.name === style.name
-                  ? 'border-cyan-400 scale-105 shadow-lg'
-                  : 'border-transparent hover:border-gray-700'
-              }`}
-            >
-              <div
-                className="w-full h-full rounded-md flex flex-col items-center justify-center text-white font-semibold text-sm px-1 relative overflow-hidden" 
-                style={{
-                  backgroundImage: `url(${style.previewImageUrl})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
+          {VISUAL_STYLES.map((style) => {
+            const isSelected = selectedStyle.name === style.name;
+            return (
+              <button
+                key={style.name}
+                onClick={() => setSelectedStyle(style)}
+                className={`relative h-28 p-1.5 rounded-lg text-center flex items-center justify-center transition-all duration-200 border-2 group ${ 
+                  isSelected
+                    ? 'border-cyan-400 scale-105 shadow-lg'
+                    : 'border-transparent hover:border-gray-700'
+                }`}
               >
-                <div className="absolute inset-0 bg-black/40 z-10"></div> 
-                <span className="relative z-20">{style.name}</span> 
-              </div>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 pointer-events-none">
-                {style.keywords}
-              </div>
-            </button>
-          ))}
+                <div
+                  className="w-full h-full rounded-md flex flex-col items-center justify-center text-white font-semibold text-sm px-1 relative overflow-hidden" 
+                  style={{
+                    backgroundImage: `url(${style.previewImageUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-t ${style.colorClass} to-black transition-all duration-300 z-10 ${
+                      isSelected 
+                          ? 'opacity-60' 
+                          : 'opacity-80 group-hover:opacity-50'
+                  }`}></div>
+                  <span className="relative z-20 drop-shadow-md">{style.name}</span>
+                </div>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 pointer-events-none">
+                  {style.keywords}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-400 mb-2">
+          5. Adicionar créditos (Opcional)
+        </label>
+        <div className="space-y-3">
+            <input
+            type="text"
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            placeholder="Seu nome"
+            className="w-full bg-black border-gray-700 text-gray-200 rounded-md p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+            />
+            <input
+            type="text"
+            value={authorHandle}
+            onChange={(e) => setAuthorHandle(e.target.value)}
+            placeholder="Seu @ (ex: @usuario)"
+            className="w-full bg-black border-gray-700 text-gray-200 rounded-md p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+            />
         </div>
       </div>
 
